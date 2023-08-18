@@ -64,7 +64,7 @@
 ```c++
 // 随机数生成（不保证环境均可用）
 mt19937 rand(chrono::system_clock::now().time_since_epoch().count());
-cout < rand() << endl;
+cout << rand() << endl;
 // 对拍
 while(true) {
 	system("Edm.exe");
@@ -130,6 +130,8 @@ struct HASH { // 多测记得清空
 ```
 
 ## 2. 计算几何
+
+> 本部分主要学习自杜老师的代码源计算几何课程～(∠・ω< )⌒★！
 
 ### 2.1 基础
 
