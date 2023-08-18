@@ -1,5 +1,59 @@
 # YXHXianYu-XCPC-Template
-[toc]
+
+## 0. 目录
+- [YXHXianYu-XCPC-Template](#yxhxianyu-xcpc-template)
+	- [0. 目录](#0-目录)
+	- [1. 常用算法](#1-常用算法)
+		- [1.1 对拍](#11-对拍)
+		- [1.2 哈希表](#12-哈希表)
+	- [2. 计算几何](#2-计算几何)
+		- [2.1 基础](#21-基础)
+		- [2.2 极角排序](#22-极角排序)
+		- [2.3 点与线段](#23-点与线段)
+		- [2.4 多边形](#24-多边形)
+			- [2.4.1 简单多边形面积](#241-简单多边形面积)
+			- [2.4.2 点包含](#242-点包含)
+			- [2.4.3 凸包](#243-凸包)
+			- [2.4.4 不严格凸包](#244-不严格凸包)
+			- [2.4.5 直线切凸多边形](#245-直线切凸多边形)
+			- [2.4.6 旋转卡壳](#246-旋转卡壳)
+			- [2.4.7 半平面交](#247-半平面交)
+		- [2.5 圆](#25-圆)
+			- [2.5.1 圆和圆的关系](#251-圆和圆的关系)
+			- [2.5.2 圆和直线的交点](#252-圆和直线的交点)
+			- [2.5.3 两个圆的交点](#253-两个圆的交点)
+			- [2.5.4 两个圆的切线](#254-两个圆的切线)
+			- [2.5.5 圆的内心、外心、垂心](#255-圆的内心外心垂心)
+			- [2.5.6 最小圆覆盖](#256-最小圆覆盖)
+			- [2.5.7 两个向量的夹角](#257-两个向量的夹角)
+			- [2.5.8 求圆和三角形的交的有向面积](#258-求圆和三角形的交的有向面积)
+			- [2.5.9 圆的面积并、欧拉公式](#259-圆的面积并欧拉公式)
+		- [2.6 杂题](#26-杂题)
+			- [2.6.1 平面最近点对](#261-平面最近点对)
+			- [2.6.2 最小矩形覆盖](#262-最小矩形覆盖)
+	- [3. 字符串](#3-字符串)
+		- [3.1 KMP](#31-kmp)
+		- [3.2 EXKMP](#32-exkmp)
+		- [3.3 Manacher](#33-manacher)
+		- [3.4 AC自动机](#34-ac自动机)
+		- [3.5 后缀数组 - 倍增 O(nlogn)](#35-后缀数组---倍增-onlogn)
+		- [3.6 后缀数组 - SAIS O(n)](#36-后缀数组---sais-on)
+		- [3.7 后缀自动机](#37-后缀自动机)
+		- [3.8 广义后缀自动机（缺）](#38-广义后缀自动机缺)
+		- [3.9 例题：SAM+线段树合并+树上倍增（缺）](#39-例题sam线段树合并树上倍增缺)
+		- [3.10 最小表示法](#310-最小表示法)
+		- [3.11 杂题](#311-杂题)
+	- [4. 数据结构](#4-数据结构)
+		- [4.1 线性基](#41-线性基)
+	- [5. 图论](#5-图论)
+		- [5.1 2-SAT](#51-2-sat)
+		- [5.2 DFS序](#52-dfs序)
+		- [5.3 欧拉序求LCA O(1)](#53-欧拉序求lca-o1)
+	- [6. 数论](#6-数论)
+		- [6.1 逆元](#61-逆元)
+	- [9. 其他](#9-其他)
+		- [9.1 树哈希](#91-树哈希)
+
 
 * 缺：EXSAM、回文自动机、序列自动机
 
@@ -10,7 +64,7 @@
 ```c++
 // 随机数生成（不保证环境均可用）
 mt19937 rand(chrono::system_clock::now().time_since_epoch().count());
-cout << rand() << endl;
+cout < rand() << endl;
 // 对拍
 while(true) {
 	system("Edm.exe");
@@ -74,8 +128,6 @@ struct HASH { // 多测记得清空
 	#undef LLI
 } mpn; // 多测记得清空
 ```
-
-
 
 ## 2. 计算几何
 
@@ -145,7 +197,7 @@ sort(p.begin() + 1, p.end() + n + 1, [&](P& a, P& b) {
 
 ```c++
 // 判断 直线p1p2 和 直线q1q2 是否严格相交
-// => crossOp(p1, p2, q1) * crossOp(p1, p2, q2) < 0
+// = crossOp(p1, p2, q1) * crossOp(p1, p2, q2) < 0
 
 // 判断 直线p1p2 和 直线q1q2 是否相交
 bool isLL(P p1, P p2, P q1, P q2) {
@@ -1064,7 +1116,7 @@ struct SAM {
 
 ### 3.8 广义后缀自动机（缺）
 
-### 3.9 题：SAM+线段树合并+树上倍增（缺）
+### 3.9 例题：SAM+线段树合并+树上倍增（缺）
 
 ### 3.10 最小表示法
 
@@ -1190,6 +1242,274 @@ void work() {
 ```
 
 ## 5. 图论
+
+### 5.1 2-SAT
+
+* 问题
+  * 有 $x_1, x_2, ..., x_n$ 这 $n$ 个 $bool$ 变量
+  * 有多个形如 $x_1\ or\ (not\ x_2) = 1$ 的限制
+    * $x_1=0/1,\ x_2=0/1$ 至少一个成立
+  * 是否有一组解
+* 限制的拓展
+  * $x_1\ \&\ x_2 = 0$
+    * $x_1=0,\ x_2=0$ 至少一个成立
+    * $(not\ x_1)\ or\ (not\ x_2)=1$
+  * $x_1\ \&\ x_2 = 1$
+    * $x_1=1,\ x_2=1$ 至少一个成立 且 $x_1=1,\ x_2=0$ 至少一个成立 且 $x_1=0,\ x_2=1$ 至少一个成立
+  * $x_1=x_2$
+    * $x_1=1,\ x_2=0$ 至少一个成立 且 $x_1=0,\ x_2=1$ 至少一个成立
+  * $x_1=1$
+    * $x_1=1,\ x_1=1$ 至少一个成立
+  * 二元形式都可以表示成这种形式
+
+```c++
+void work() {
+	int n, m;
+	cin >> n >> m;
+
+	// 0...2n-1: 2*i, 2*i+1
+	// 0 index for x^1
+	int N = n << 1;
+	vector<vector<int>> e(N + 1, vector<int>());
+	for(int i = 1; i <= m; i++) {
+		char c1, c2;
+		int u, v;
+		cin >> c1 >> u >> c2 >> v;
+		
+		u--;
+		v--;
+		u = u * 2 + (c1 == 'h');
+		v = v * 2 + (c2 == 'h');
+		// u or v = 1
+		e[u^1].push_back(v);
+		e[v^1].push_back(u);
+	}
+
+	// tarjan
+	int dfnCnt = 0, sccCnt = 0, top = 0;
+	vector<int> dfn(N + 1), low(N + 1), scc(N + 1), stk(N + 2, -1);
+
+	function<void(int)> tarjan = [&](int x) {
+		dfn[x] = low[x] = ++dfnCnt;
+		stk[++top] = x;
+		for(auto y: e[x]) {
+			if(!dfn[y]) tarjan(y);
+			if(!scc[y]) low[x] = min(low[x], low[y]);
+		}
+		if(dfn[x] == low[x]) {
+			sccCnt++;
+			for(; stk[top + 1] != x; top--) {
+				scc[stk[top]] = sccCnt;
+			}
+		}
+	};
+
+	for(int i = 0; i < N; i++) if(!dfn[i])
+		tarjan(i);
+
+	for(int i = 0; i < n; i++) {
+		// scc[i << 1] < scc[i << 1 | 1] => choose i<<1
+		if(scc[i << 1] == scc[i << 1 | 1]) {
+			cout << "BAD" << endl;
+			return;
+		}
+	}
+	cout << "GOOD" << endl;
+}
+```
+
+### 5.2 DFS序
+
+```c++
+/**
+ * DFS序1：单点修改、查询子树和、查询根到任意点路径权值之和
+*/
+void work() {
+	int n, q;
+	cin >> n >> q;
+
+	vector<vector<int>> e(n + 1, vector<int>());
+	for(int i = 1; i < n; i++) {
+		int u, v; cin >> u >> v;
+		e[u].push_back(v); e[v].push_back(u);
+	}
+
+	vector<int> dfn(n + 1), dfnR(n + 1);
+
+	function<void(int, int)> dfs = [&](int x, int fa) {
+		dfn[x] = ++dfn[0];
+		for(auto y: e[x]) {
+			if(y == fa) continue;
+			dfs(y, x);
+		}
+		dfnR[x] = dfn[0];
+	};
+	dfs(1, 0);
+
+	// bit
+    /* Codes about BIT 1 */
+	// bit2
+    /* Codes about BIT 2 */
+
+	vector<int> a(n + 1);
+	for(int i = 1; i <= n; i++) {
+		cin >> a[i];
+		add1(dfn[i], a[i]);
+		add2(dfn[i], a[i]);
+		add2(dfnR[i] + 1, -a[i]);
+	}
+
+	for(int i = 1; i <= q; i++) {
+		int opt;
+		cin >> opt;
+		if(opt == 1) {
+			int x, y;
+			cin >> x >> y;
+			add1(dfn[x], -a[x]);
+			add2(dfn[x], -a[x]);
+			add2(dfnR[x] + 1, a[x]);
+			a[x] = y;
+			add1(dfn[x], a[x]);
+			add2(dfn[x], a[x]);
+			add2(dfnR[x] + 1, -a[x]);
+		} else if(opt == 2) {
+			int x;
+			cin >> x;
+			cout << query1(dfnR[x]) - query1(dfn[x] - 1) << " ";
+            cout << query2(dfn[x]) << endl;
+		} else assert(false);
+	}
+}
+
+/**
+ * DFS序2：单点修改、查询子树和、换根
+ * DFS序的换根分三种情况考虑：① root=x，整颗树；
+ * ② root在x的子树中，
+*/
+void work() {
+	int n, q;
+	cin >> n >> q;
+
+	vector<vector<int>> e(n + 1, vector<int>());
+	for(int i = 1; i < n; i++) {
+		int u, v; cin >> u >> v;
+		e[u].push_back(v); e[v].push_back(u);
+	}
+
+	int lim = __lg(n);
+	vector<int> dfn(n + 1), dfnR(n + 1), dep(n + 1);
+	vector<vector<int>> fa(lim + 1, vector<int>(n + 1));
+
+	function<void(int)> dfs = [&](int x) {
+		dfn[x] = ++dfn[0];
+		for(auto y: e[x]) {
+			if(y == fa[0][x]) continue;
+			dep[y] = dep[x] + 1;
+			fa[0][y] = x;
+			dfs(y);
+		}
+		dfnR[x] = dfn[0];
+	};
+
+	dep[1] = 1;
+	dfs(1);
+
+	for(int k = 1; k <= lim; k++) {
+		for(int i = 1; i <= n; i++) {
+			fa[k][i] = fa[k-1][fa[k-1][i]];
+		}
+	}
+
+	// bit
+    /* Codes about BIT */
+	
+
+	vector<int> a(n + 1);
+	for(int i = 1; i <= n; i++) {
+		cin >> a[i];
+		add(dfn[i], a[i]);
+	}
+
+	int root = 1;
+	for(int i = 1; i <= q; i++) {
+		int opt;
+		cin >> opt;
+		if(opt == 1) {
+			int x, y;
+			cin >> x >> y;
+			add(dfn[x], -a[x]);
+			a[x] = y;
+			add(dfn[x], a[x]);
+		} else if(opt == 2) {
+			int x;
+			cin >> x;
+			int ans;
+			if(x == root) {
+				ans = query(n);
+			} else if(dfn[x] <= dfn[root] && dfn[root] <= dfnR[x]) {
+				// root在x的子树内
+				int p = root;
+				for(int j = lim; j >= 0; j--) {
+					if(dep[fa[j][p]] > dep[x])
+						p = fa[j][p];
+				}
+				ans = query(n) - (query(dfnR[p]) - query(dfn[p] - 1));
+			} else {
+				ans = query(dfnR[x]) - query(dfn[x] - 1);
+			}
+			cout << ans << endl;
+		} else if(opt == 3) {
+			cin >> root;
+		} else assert(false);
+	}
+}
+```
+
+### 5.3 欧拉序求LCA O(1)
+
+```c++
+void work() {
+	int n; cin >> n;
+	vector<vector<int>> e(n + 1, vector<int>());
+	for(int i = 1; i < n; i++) {
+		int u, v; cin >> u >> v;
+		e[u].push_back(v); e[v].push_back(u);
+	}
+
+	int N = (n << 1) - 1;
+	vector<int> euler(N + 1), pos(n + 1), dep(n + 1);
+	function<void(int, int)> dfs = [&](int x, int fa) {
+		euler[++euler[0]] = x;
+		pos[x] = euler[0];
+		for(auto y: e[x]) {
+			if(y == fa) continue;
+			dep[y] = dep[x] + 1;
+			dfs(y, x);
+			euler[++euler[0]] = x;
+		}
+	};
+	dep[1] = 1;
+	dfs(1, 0);
+	assert(N == euler[0]);
+	
+	// st
+	int lim = __lg(N);
+	vector<vector<array<int, 2>>> st(lim + 1, vector<array<int, 2>>(N + 1));
+	for(int i = 1; i <= N; i++) {
+		st[0][i] = {dep[euler[i]], euler[i]};
+	}
+	for(int k = 1; k <= lim; k++) {
+		int lim2 = N - (1 << k) + 1;
+		for(int i = 1; i <= lim2; i++) {
+			st[k][i] = min(st[k-1][i], st[k-1][i+(1<<k-1)]);
+		}
+	}
+	auto query = [&](int L, int R) {
+		int k = __lg(R - L + 1);
+		return min(st[k][L], st[k][R-(1<<k)+1])[1];
+	};
+}
+```
 
 ## 6. 数论
 
