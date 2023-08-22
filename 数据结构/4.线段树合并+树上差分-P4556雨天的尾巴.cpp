@@ -3,6 +3,7 @@ using namespace std;
 #define int long long
 #define endl '\n'
 
+/* 线段树 单点加 区间最大值 线段树合并*/
 struct ST {
 	struct Node {
 		int lc, rc;
@@ -69,6 +70,7 @@ void work() {
 		e[v].push_back(u);
 	}
 
+	/* 树链剖分 */
 	vector<int> fa(n + 1), sz(n + 1), son(n + 1), dep(n + 1),
 				dfn(n + 1), dfnR(n + 1), top(n + 1), rk(n + 1);
 
@@ -103,6 +105,7 @@ void work() {
 	dfs1(1);
 	dfs2(1);
 
+	/* 线段树（调用） */
 	int N = 1e5;
 	ST st(5 * m * __lg(N));
 	vector<int> rt(n + 1);
@@ -119,8 +122,9 @@ void work() {
 		st.modify(rt[fa[lca]], 1, N, z, -1);
 	}
 
-	vector<int> ans(n + 1);
+	/* 树上差分 */
 
+	vector<int> ans(n + 1);
 	function<void(int)> dfs3 = [&](int x) {
 		for(auto y: e[x]) {
 			if(y == fa[x]) continue;
@@ -129,7 +133,6 @@ void work() {
 		}
 		ans[x] = -st.query(rt[x], 1, N, 1, N)[1];
 	};
-	
 	dfs3(1);
 
 	for(int i = 1; i <= n; i++) cout << ans[i] << endl;

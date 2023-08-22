@@ -45,6 +45,8 @@
 		- [3.11 杂题](#311-杂题)
 	- [4. 数据结构](#4-数据结构)
 		- [4.1 线性基](#41-线性基)
+		- [4.2 雨天的尾巴：树链剖分+线段树合并+树上差分](#42-雨天的尾巴树链剖分线段树合并树上差分)
+		- [4.3 线段树](#43-线段树)
 	- [5. 图论](#5-图论)
 		- [5.1 2-SAT](#51-2-sat)
 		- [5.2 DFS序](#52-dfs序)
@@ -1240,6 +1242,237 @@ void work() {
 	}
 
 	cout << ans << endl;
+}
+```
+
+### 4.2 雨天的尾巴：树链剖分+线段树合并+树上差分
+
+```c++
+/* 线段树 单点加 区间最大值 线段树合并*/
+struct ST {
+	struct Node {
+		int lc, rc;
+		array<int, 2> s;
+	};
+	vector<Node> t;
+	int tot;
+	#define LC (t[x].lc)
+	#define RC (t[x].rc)
+
+	ST(int n = 0) { init(n); }
+	void init(int n) { t.resize(n); tot = 0; }
+
+	int newNode() { return ++tot; }
+	void pushup(int x) {
+		t[x].s = max(t[LC].s, t[RC].s);
+	}
+
+	void modify(int &x, int l, int r, int pos, int v) {
+		if(!x) x = newNode();
+		if(pos <= l && r <= pos) {
+			if(t[x].s[1] == 0) t[x].s = {v, -l};
+			else t[x].s[0] += v;
+			return;
+		}
+		if(pos < l || r < pos) return;
+		int mid = l + r >> 1;
+		if(pos <= mid) modify(LC, l, mid, pos, v);
+		else modify(RC, mid+1, r, pos, v);
+		pushup(x);
+	}
+
+	array<int, 2> query(int x, int l, int r, int L, int R) {
+		if(!x) return {0, 0};
+		if(L <= l && r <= R) return t[x].s;
+		if(R < l || r < L) return {0, 0};
+		int mid = l + r >> 1;
+		return max(query(LC, l, mid, L, R), query(RC, mid+1, r, L, R));
+	}
+	
+	int merge(int x, int y, int l, int r) {
+		if(!x || !y) return x + y;
+		if(l == r) {
+			t[x].s = {t[x].s[0] + t[y].s[0], -l};
+			return x;
+		}
+		int mid = l + r >> 1;
+		LC = merge(LC, t[y].lc, l, mid);
+		RC = merge(RC, t[y].rc, mid+1, r);
+		pushup(x);
+		return x;
+	}
+};
+
+void work() {
+	int n, m;
+	cin >> n >> m;
+
+	vector<vector<int>> e(n + 1, vector<int>());
+	for(int i = 1; i < n; i++) {
+		int u, v;
+		cin >> u >> v;
+		e[u].push_back(v);
+		e[v].push_back(u);
+	}
+
+	/* 树链剖分 */
+	vector<int> fa(n + 1), sz(n + 1), son(n + 1), dep(n + 1),
+				dfn(n + 1), dfnR(n + 1), top(n + 1), rk(n + 1);
+
+	function<void(int)> dfs1 = [&](int x) {
+		dep[x] = dep[fa[x]] + 1;
+		sz[x] = 1;
+		for(auto y: e[x]) {
+			if(y == fa[x]) continue;
+			fa[y] = x;
+			dfs1(y);
+			sz[x] += sz[y];
+			if(sz[y] > sz[son[x]]) son[x] = y;
+		}
+	};
+	function<void(int)> dfs2 = [&](int x) {
+		dfn[x] = ++dfn[0];
+		rk[dfn[0]] = x;
+		if(!top[x]) top[x] = x;
+		if(son[x]) top[son[x]] = top[x], dfs2(son[x]);
+		for(auto y: e[x]) if(y != fa[x] && y != son[x]) dfs2(y);
+		dfnR[x] = dfn[0];
+	};
+	auto getLca = [&](int x, int y) {
+		while(top[x] != top[y]) {
+			if(dep[top[x]] > dep[top[y]]) swap(x, y);
+			y = fa[top[y]];
+		}
+		if(dep[x] > dep[y]) swap(x, y);
+		return x;
+	};
+	
+	dfs1(1);
+	dfs2(1);
+
+	/* 线段树（调用） */
+	int N = 1e5;
+	ST st(5 * m * __lg(N));
+	vector<int> rt(n + 1);
+
+	for(int i = 1; i <= m; i++) {
+		int x, y, z;
+		cin >> x >> y >> z;
+
+		int lca = getLca(x, y);
+
+		st.modify(rt[x], 1, N, z, 1);
+		st.modify(rt[y], 1, N, z, 1);
+		st.modify(rt[lca], 1, N, z, -1);
+		st.modify(rt[fa[lca]], 1, N, z, -1);
+	}
+
+	/* 树上差分 */
+
+	vector<int> ans(n + 1);
+	function<void(int)> dfs3 = [&](int x) {
+		for(auto y: e[x]) {
+			if(y == fa[x]) continue;
+			dfs3(y);
+			rt[x] = st.merge(rt[x], rt[y], 1, N);
+		}
+		ans[x] = -st.query(rt[x], 1, N, 1, N)[1];
+	};
+	dfs3(1);
+
+	for(int i = 1; i <= n; i++) cout << ans[i] << endl;
+}
+```
+
+### 4.3 线段树
+
+```c++
+struct ST {
+	struct Node {
+		int s, lzt;
+	};
+	vector<Node> t;
+	#define LC (x << 1)
+	#define RC (x << 1 | 1)
+
+	ST(int n = 0) { init(n); }
+	void init(int n) { t.resize(n << 2); }
+
+	void pushup(int x) {
+		t[x].s = t[LC].s + t[RC].s;
+	}
+	void pushdown(int x, int l, int r) {
+		if(t[x].lzt) {
+			int mid = l + r >> 1;
+
+			t[LC].s += t[x].lzt * (mid - l + 1);
+			t[LC].lzt += t[x].lzt;
+
+			t[RC].s += t[x].lzt * (r - mid);
+			t[RC].lzt += t[x].lzt;
+
+			t[x].lzt = 0;
+		}
+	}
+	void build(int x, int l, int r, vector<int>& a) {
+		if(l == r) {
+			t[x].s = a[l];
+			return;
+		}
+
+		int mid = l + r >> 1;
+		build(LC, l, mid, a);
+		build(RC, mid+1, r, a);
+		pushup(x);
+	}
+	void modify(int x, int l, int r, int L, int R, int va) {
+		if(L <= l && r <= R) {
+			t[x].s += va * (r - l + 1);
+			t[x].lzt += va;
+			return;
+		}
+		if(R < l || r < L) return;
+
+		pushdown(x, l, r);
+		int mid = l + r >> 1;
+		modify(LC, l, mid, L, R, va);
+		modify(RC, mid+1, r, L, R, va);
+		pushup(x);
+	}
+	int query(int x, int l, int r, int L, int R) {
+		if(L <= l && r <= R) return t[x].s;
+		if(R < l || r < L) return 0;
+
+		pushdown(x, l, r);
+		int mid = l + r >> 1;
+		return query(LC, l, mid, L, R) + query(RC, mid+1, r, L, R);
+	}
+};
+
+
+void work() {
+	int n, m;
+	cin >> n >> m;
+
+	vector<int> a(n + 1);
+	for(int i = 1; i <= n; i++) cin >> a[i];
+
+	ST st(n);
+	st.build(1, 1, n, a);
+
+	for(int i = 1; i <= m; i++) {
+		int opt;
+		cin >> opt;
+		if(opt == 1) {
+			int x, y, k;
+			cin >> x >> y >> k;
+			st.modify(1, 1, n, x, y, k);
+		} else if(opt == 2) {
+			int x, y;
+			cin >> x >> y;
+			cout << st.query(1, 1, n, x, y) << endl;
+		} else assert(false);
+	}
 }
 ```
 

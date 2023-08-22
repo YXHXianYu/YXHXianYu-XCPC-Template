@@ -18,6 +18,8 @@ void work() {
 	}
 	t[m] = '#';
 
+
+	// 需要更新（gls板子）
 	vector<int> f(m + 1);
 	int md = 0, r = 0, j, k;
 	for(int i = 1; i <= m; i++) {
