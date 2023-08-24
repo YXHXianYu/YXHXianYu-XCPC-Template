@@ -188,6 +188,7 @@ struct P {
 ### 2.2 极角排序
 
 ```c++
+// 待排序元素必须去除(0, 0)，否则结果会错误！
 int n = 50;
 vector<P> p(n + 1);
 sort(p.begin() + 1, p.end() + n + 1, [&](P& a, P& b) {
