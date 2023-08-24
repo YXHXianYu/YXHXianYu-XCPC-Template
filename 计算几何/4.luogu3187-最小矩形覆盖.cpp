@@ -304,9 +304,9 @@ void work() {
 		}
 	}
 
-	cout << fixed << setprecision(7) << ans << endl;
+	cout << fixed << setprecision(5) << ans+EPS << endl;
 	for(int i = 0; i <= 3; i++) {
-		cout << result[(i+mnp)%4].x << " " << result[(i+mnp)%4].y << endl;
+		cout << result[(i+mnp)%4].x+EPS << " " << result[(i+mnp)%4].y+EPS << endl;
 	}
 }
 

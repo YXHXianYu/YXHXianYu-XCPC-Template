@@ -144,9 +144,7 @@ void polarSort() {
     });
 }
 
-void work() {
-    int n;
-    cin >> n;
+void work(int n) {
 
     vector<P> a(n + 1);
     for(int i = 1; i <= n; i++) {
@@ -220,10 +218,9 @@ signed main() {
 	ios::sync_with_stdio(0);
 	cin.tie(0);
 	
-	int t = 1;
-	cin >> t;
-	while(t--) {
-		work();
+    int n;
+	while(cin >> n) {
+		work(n);
 	}
 	
 	return 0;
