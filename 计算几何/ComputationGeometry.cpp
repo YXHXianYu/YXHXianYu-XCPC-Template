@@ -143,7 +143,7 @@ db disSS(P p1, P p2, P q1, P q2) {
     );
 }
 
-// 极角排序
+// 极角排序（待排序元素必须去除(0, 0)，否则结果会错误！）
 void polarSort() {
     int n = 50;
     vector<P> p(n + 1);
