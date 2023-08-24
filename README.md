@@ -168,6 +168,7 @@ struct P {
 
     db dot(P p) { return x * p.x + y * p.y; }
     db det(P p) { return x * p.y - y * p.x; }
+    // P cross(P p) { return {y*p.z - z*p.y, z*p.x - x*p.z, x*p.y - y*p.x}; }
 
     db distTo(P p) { return (*this-p).abs(); }
     // return value in [-pi, pi]; longdouble ver is atan2l(y, x)
