@@ -24,7 +24,7 @@ struct SAM {
 
 	void add(char c) {
 		c -= 'a';
-		if(t[lst].nxt[c] && t[lst].len + 1 == t[t[lst].nxt[c]].len) { // for exSAM
+		if(t[lst].nxt[c] && t[t[lst].nxt[c]].len == t[lst].len + 1) { // for exSAM
 			lst = t[lst].nxt[c];
 			return;
 		}

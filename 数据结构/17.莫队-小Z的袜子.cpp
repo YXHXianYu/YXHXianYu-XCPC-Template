@@ -28,8 +28,8 @@ void work() {
 	vector<array<int, 3>> opt(m + 1);
 	for(int i = 1; i <= m; i++) cin >> opt[i][0] >> opt[i][1], opt[i][2] = i;
 	sort(opt.begin() + 1, opt.begin() + m + 1, [&](const array<int, 3>& a, const array<int, 3>& b) {
-		if(id[a[1]] != id[b[1]]) return id[a[1]] < id[b[1]];
-		return a[0] < b[0];
+		if(id[a[0]] != id[b[0]]) return id[a[0]] < id[b[0]];
+		return (id[a[0]] & 1 ? a[1] < b[1] : a[1] > b[1]);
 	});
 
 	int l = 1, r = 0;
