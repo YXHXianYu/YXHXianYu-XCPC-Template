@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+int a[200000],cnt[200001]={};
+int main(){
+	ios::sync_with_stdio(false),cin.tie(0);
+	int n,k,i,cl,cr,tl,tr,lim1,lim2;
+	long long sum=0;
+	cin>>n>>k;
+	for(i=0;i<n;i++)cin>>a[i];
+	cl=0;
+	cr=-2;
+	for(i=0;i<=200000;i++)cnt[i]=0;
+	for(i=2;i<n;i+=2)
+	{
+		lim1=max(0,i-k+1);
+		lim2=min(n-k,i-k/2-1);
+		if(lim1>lim2)continue;
+		tl=lim1+k-(i-lim1)-1;
+		tr=lim2+k-(i-lim2)-1;
+		while(cl<tl)
+		{
+			cnt[a[cl]]--;
+			cl+=2;
+		}
+		while(cl>tl)
+		{
+			cl-=2;
+			cnt[a[cl]]++;
+		}
+		while(cr<tr)
+		{
+			cr+=2;
+			cnt[a[cr]]++;
+		}
+		while(cr>tr)
+		{
+			cnt[a[cr]]--;
+			cr-=2;
+		}
+		sum+=(cr-cl)/2+1-cnt[a[i]];
+	}
+	cl=1;
+	cr=-1;
+	for(i=0;i<=200000;i++)cnt[i]=0;
+	for(i=3;i<n;i+=2)
+	{
+		lim1=max(0,i-k+1);
+		lim2=min(n-k,i-k/2-1);
+		if(lim1>lim2)continue;
+		tl=lim1+k-(i-lim1)-1;
+		tr=lim2+k-(i-lim2)-1;
+		while(cl<tl)
+		{
+			cnt[a[cl]]--;
+			cl+=2;
+		}
+		while(cl>tl)
+		{
+			cl-=2;
+			cnt[a[cl]]++;
+		}
+		while(cr<tr)
+		{
+			cr+=2;
+			cnt[a[cr]]++;
+		}
+		while(cr>tr)
+		{
+			cnt[a[cr]]--;
+			cr-=2;
+		}
+		sum+=(cr-cl)/2+1-cnt[a[i]];
+	}
+	cout<<sum<<'\n';
+	return 0;
+}
