@@ -2019,7 +2019,7 @@ function<int(int, int, int&, int&)> exgcd = [&](int n, int m, int &x, int &y) ->
 	int z = x;
 	x = y;
 	y = z - n / m * y;
-	return gcd;
+	return g;
 };
 ```
 

@@ -29,7 +29,7 @@ void work() {
 		int z = x;
 		x = y;
 		y = z - n / m * y;
-		return gcd;
+		return g;
 	};
 
 	auto merge = [&](array<int, 2>& a, array<int, 2>& b) {
