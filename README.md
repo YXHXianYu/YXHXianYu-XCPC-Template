@@ -54,6 +54,7 @@
 		- [5.3 欧拉序求LCA O(1)](#53-欧拉序求lca-o1)
 	- [6. 数论](#6-数论)
 		- [6.1 逆元](#61-逆元)
+		- [6.2 EXGCD](#62-exgcd)
 	- [9. 其他](#9-其他)
 		- [9.1 树哈希](#91-树哈希)
 
@@ -2003,6 +2004,23 @@ for(int i = 2; i <= n; i++) inv[i] = inv[i] * s[i - 1] % MOD;
 // - 若p为质数，则
 // - C(n, m) % MOD = C(n / MOD, m / MOD) * C(n % MOD, m % MOD) % MOD;
 // - 第一部分递归处理，第二部分逆元处理
+```
+
+### 6.2 EXGCD
+
+```c++
+function<int(int, int, int&, int&)> exgcd = [&](int n, int m, int &x, int &y) -> int {
+	if(m == 0) {
+		x = 1;
+		y = 0;
+		return n;
+	}
+	int g = exgcd(m, n % m, x, y);
+	int z = x;
+	x = y;
+	y = z - n / m * y;
+	return gcd;
+};
 ```
 
 ## 9. 其他
