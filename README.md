@@ -992,7 +992,7 @@ void work() {
 	for(int i = 1; i <= n; i++) st[0][i] = ht[i];
 	for(int k = 1; k <= lim; k++) {
 		int lim2 = n - (1 << k) + 1;
-		for(int i = 1; i <= n; i++) {
+		for(int i = 1; i <= lim2; i++) {
 			st[k][i] = min(st[k-1][i], st[k-1][i+(1<<k-1)]);
 		}
 	}
