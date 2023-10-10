@@ -54,11 +54,9 @@ struct PAM {
 				for(int k = 1; k <= lim; k++) fa[k][N] = fa[k - 1][fa[k - 1][N]];
 
 				t[N].len = t[x].len + 2;
-			} else {
-				t[t[x].son[e]].cnt = 0;
 			}
 			lst = t[x].son[e];
-			t[lst].cnt += t[t[lst].fail].cnt;
+			t[lst].cnt = t[t[lst].fail].cnt;
 
 			// 找fail树祖先中是否存在长度为当前回文串一半的节点
 			if(~t[lst].len & 1) {
