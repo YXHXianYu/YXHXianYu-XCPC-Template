@@ -40,10 +40,16 @@
 		- [3.5 后缀数组 - 倍增 O(nlogn)](#35-后缀数组---倍增-onlogn)
 		- [3.6 后缀数组 - SAIS O(n)](#36-后缀数组---sais-on)
 		- [3.7 后缀自动机](#37-后缀自动机)
-		- [3.8 广义后缀自动机（缺）](#38-广义后缀自动机缺)
+		- [3.8 广义后缀自动机](#38-广义后缀自动机)
 		- [3.9 例题：SAM+线段树合并+树上倍增](#39-例题sam线段树合并树上倍增)
 		- [3.10 最小表示法](#310-最小表示法)
 		- [3.11 杂题](#311-杂题)
+		- [3.12 回文自动机](#312-回文自动机)
+			- [3.12.1 总览](#3121-总览)
+			- [3.12.2 每个前缀的回文串个数](#3122-每个前缀的回文串个数)
+			- [3.12.3 每个本质不同的回文串个数](#3123-每个本质不同的回文串个数)
+			- [3.12.4 最小回文划分相关(无整理纯复制)](#3124-最小回文划分相关无整理纯复制)
+			- [3.12.5 一个串的所有前缀的双回文子串个数](#3125-一个串的所有前缀的双回文子串个数)
 	- [4. 数据结构](#4-数据结构)
 		- [4.1 线性基](#41-线性基)
 		- [4.2 雨天的尾巴：树链剖分+线段树合并+树上差分](#42-雨天的尾巴树链剖分线段树合并树上差分)
@@ -1157,7 +1163,108 @@ struct SAM {
 };
 ```
 
-### 3.8 广义后缀自动机（缺）
+### 3.8 广义后缀自动机
+
+```c++
+/* ----- ex suffix automaton ----- */
+struct state {
+	int len, link;
+	int nxt[26];
+} t[maxn]; // need double space
+int N, lst;
+
+int newNode() {
+	++N;
+	for(int j = 0; j <= 25; j++) t[N].nxt[j] = 0;
+	t[N].link = 0;
+	t[N].len = 0;
+	return N;
+}
+
+void samInit() {
+	N = 0;
+	newNode();
+}
+
+void trieBuild(const char *s, int n) {
+	int p = 1;
+	for(int i = 1; i <= n; i++) {
+		int e = s[i] - 'a';
+		if(t[p].nxt[e] == 0)
+			t[p].nxt[e] = newNode();
+		p = t[p].nxt[e];
+	} 
+}
+
+int samAdd(int lst, int c) { // lst is father; c is edge
+	int x = t[lst].nxt[c];
+	if(t[x].len) return x;
+	
+	t[x].len = t[lst].len + 1;
+	int p = t[lst].link;
+	while(p && !t[p].nxt[c]) {
+		t[p].nxt[c] = x;
+		p = t[p].link;
+	}
+	if(!p) {
+		t[x].link = 1;
+		return x;
+	}
+	int q = t[p].nxt[c];
+	if(t[p].len + 1 == t[q].len) {
+		t[x].link = q;
+		return x;
+	}
+	int cl = newNode();
+	for(int i = 0; i <= 25; i++)
+		t[cl].nxt[i] = t[t[q].nxt[i]].len != 0 ? t[q].nxt[i] : 0;
+	t[cl].len = t[p].len + 1;
+	while(p && t[p].nxt[c] == q) {
+		t[p].nxt[c] = cl;
+		p = t[p].link;
+	}
+	t[cl].link = t[q].link;
+	t[x].link = cl;
+	t[q].link = cl;
+	return x;
+}
+
+void samBuild() {
+	queue<pair<int, int> > q;
+	for(int i = 0; i <= 25; i++)
+		if(t[1].nxt[i])
+			q.push(make_pair(1, i));
+	while(!q.empty()) {
+		auto pr = q.front(); q.pop();
+		int lst = samAdd(pr.first, pr.second);
+		for(int i = 0; i <= 25; i++)
+			if(t[lst].nxt[i])
+				q.push(make_pair(lst, i));
+	}
+}
+
+/* ----- ex suffix automaton ----- */
+
+int n;
+char s[maxn];
+
+void work() {
+	
+	cin >> n;
+	samInit();
+	for(int i = 1; i <= n; i++) {
+		cin >> (s + 1);
+		int m = strlen(s + 1);
+		trieBuild(s, m);
+	}
+	samBuild();
+	
+	int ans = 0;
+	for(int i = 2; i <= N; i++)
+		ans += t[i].len - t[t[i].link].len;
+	cout << ans << endl;
+}
+```
 
 ### 3.9 例题：SAM+线段树合并+树上倍增
 
@@ -1398,6 +1505,375 @@ i = min(i, j);
 * AHOI 2013 差异（后缀数组）
   * 题意：求 $\sum_{1\leq i < j \leq n} len(T_i)+len(T_j)-2*LCP(T_i,\ T_j)$
   * 题解：后缀数组 + 笛卡尔树上计数（或并查集等经典模型）
+
+### 3.12 回文自动机
+
+#### 3.12.1 总览
+
+* 每个本质不同的回文串个数
+  * 节点数-2（除去0节点与1节点）
+* 以某个节点为结尾的回文串个数
+  * 见 `3.12.2`
+* 统计某个回文串的出现次数
+  * 见 `3.12.3`
+  * 需要在fail树上从底向上累计
+* 公共回文子串数量
+  * 对两个串建立PAM，如果有相同的状态，就是找到了相同的回文串
+* 最小回文划分
+  * 题意：将字符串S拆成 $k$ 个回文串，使得 $k$ 数值最小
+    * 显然可以划分成 $n$ 个回文串
+  * 解法：考虑dp[i]: 前缀i的最小回文划分
+* 字符串 `abbaabba` 的PAM
+  * ![pic](./README/3.12.1.png)
+
+#### 3.12.2 每个前缀的回文串个数
+
+```c++
+// 求每个前缀的回文串个数
+struct PAM {
+	struct Node {
+		int fail, len, num, fa; // num: 该回文串的后缀的回文串个数
+		int son[26];
+	};
+	vector<Node> t;
+	vector<int> f; // f[i]: 以第i个字符结尾的回文串个数
+	int N;
+
+	PAM(int n = 0) {
+		t.resize(n + 2);
+		f.resize(n + 2);
+		t[0].fail = 1;
+		t[1].len = -1;
+		N = 1;
+	}
+
+	void build(string& s) {
+		int n = s.size() - 1;
+		auto getfail = [&](int x, int i) {
+			while(s[i - t[x].len - 1] != s[i]) x = t[x].fail;
+			return x;
+		};
+		int lst = 0;
+		for(int i = 1; i <= n; i++) {
+			/* For LuoguP5496 */ if(i >= 2) s[i] = (s[i] + f[i - 1] - 'a') % 26 + 'a';
+			int e = s[i] - 'a';
+			int x = getfail(lst, i);
+			if(!t[x].son[e]) {
+				t[++N].fail = t[getfail(t[x].fail, i)].son[e];
+				t[x].son[e] = N;
+				t[N].fa = x;
+				t[N].len = t[x].len + 2;
+				t[N].num = t[t[N].fail].num + 1;
+			}
+			lst = t[x].son[e];
+			f[i] = t[lst].num;
+		}
+	}
+};
+
+void work() {
+	string s;
+	cin >> s;
+	int n = s.size();
+	s = " " + s;
+
+	PAM pam(n);
+	pam.build(s);
+
+	for(int i = 1; i <= n; i++) cout << pam.f[i] << " ";
+	cout << endl;
+}
+```
+
+#### 3.12.3 每个本质不同的回文串个数
+
+```c++
+struct PAM {
+	struct Node {
+		int fail, len, num, fa;
+		int son[26];
+	};
+	vector<Node> t;
+	int N = 0;
+
+	PAM(int n) { 
+		t.resize(n + 2);
+		t[0].fail = 1;
+		t[1].len = -1;
+		N = 1;
+	}
+
+	int build(string& s) {
+		int n = s.size() - 1;
+
+		auto getfail = [&](int x, int i) {
+			while(s[i - t[x].len - 1] != s[i]) x = t[x].fail;
+			return x;
+		};
+
+		int lst = 0;
+		vector<int> f(n + 2); // f[i]: 第i个点的出现次数
+		for(int i = 1; i <= n; i++) {
+			int e = s[i] - 'a';
+			int x = getfail(lst, i);
+			if(!t[x].son[e]) {
+				t[++N].fail = t[getfail(t[x].fail, i)].son[e];
+				t[x].son[e] = N;
+				t[N].fa = x;
+				t[N].len = t[x].len + 2;
+				t[N].num = t[t[N].fail].num + 1;
+			}
+			lst = t[x].son[e];
+			f[lst] += 1;
+		}
+
+		vector<int> id(N);
+		for(int i = 2; i <= N; i++) id[i - 1] = i;
+		sort(id.begin() + 1, id.end(), [&](int i, int j) {
+			return t[i].len > t[j].len;
+		});
+		int ans = 0;
+		for(int i = 1; i < N; i++) {
+			int x = id[i];
+			ans = max(ans, f[x] * t[x].len);
+			f[t[x].fail] += f[x]; // 类似后缀自动机，往fail树父亲累计贡献
+		}
+		return ans;
+	}
+};
+```
+
+#### 3.12.4 最小回文划分相关(无整理纯复制)
+
+* Codeforces 932G
+  * ![pic](README/3.12.4.1.png)
+
+```c++
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+const int MOD=1000000007,N=1000006;
+struct PAM{
+	int s[N];
+	int tot,siz,las;
+	int ch[N][26],fail[N],len[N],dif[N],slink[N];
+	inline nwnode(int l){
+		len[++tot]=l;
+		memset(ch[tot],0,sizeof(ch[tot]));
+		fail[tot]=0;
+		return tot;
+	}
+	PAM(){
+		tot=-1,las=0;
+		s[siz=0]='#';
+		nwnode(0);
+		nwnode(-1);
+		fail[0]=1;
+	}
+	inline int getfail(int x){
+		while(s[siz-len[x]-1]!=s[siz])x=fail[x];
+		return x;
+	}
+	inline void inser(char c){
+		s[++siz]=c;
+		int u=getfail(las);
+		if(!ch[u][c-'a']){
+			int v=nwnode(len[u]+2);
+			fail[v]=ch[getfail(fail[u])][c-'a'];
+			ch[u][c-'a']=v;
+			dif[v]=len[v]-len[fail[v]];
+			if(dif[v]==dif[fail[v]])
+				slink[v]=slink[fail[v]];
+			else slink[v]=fail[v];//不满足等差数列，直接赋成现在的fail
+		}
+		las=ch[u][c-'a'];
+	}
+}am;
+int n;ll dp[N],g[N];
+char s[N],t[N];
+int main(){
+	scanf("%s",s+1);
+	n=strlen(s+1);
+	for(int i=1,p=0;i<=n;++i)
+		t[++p]=s[i],t[++p]=s[n-i+1];
+	dp[0]=1;
+	for(int i=1;i<=n;++i){
+		am.inser(t[i]);
+		for(int x=am.las;x>1;x=am.slink[x]){
+			g[x]=dp[i-am.len[am.slink[x]]-am.dif[x]];
+			if(am.dif[x]==am.dif[am.fail[x]])g[x]=(g[x]+g[am.fail[x]])%MOD;
+			if(i%2==0)dp[i]=(dp[i]+g[x])%MOD;
+		}
+	}printf("%lld\n",dp[n]);
+	return 0;
+}
+```
+
+* Codeforces 906E
+  * ![pic](README/3.12.4.2.png)
+
+```c++
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+typedef long long ll;
+using namespace std;
+const int N=1000006;
+int n;
+int dp[N],g[N],pre[N];
+struct PAM{
+	int s[N];
+	int siz,tot,las;
+	int fail[N],ch[N][26],len[N],dif[N],slk[N];
+	inline int nwnode(int l){
+		len[++tot]=l;
+		memset(ch[tot],0,sizeof(ch[tot]));
+		fail[tot]=0;
+		return tot;
+	}
+	PAM(){
+		tot=-1,las=0;
+		s[siz=0]=-1;
+		nwnode(0);
+		nwnode(-1);
+		fail[0]=1;
+	}
+	inline int getfail(int x){
+		while(s[siz-len[x]-1]!=s[siz])x=fail[x];
+		return x;
+	}
+	inline void inser(int c){
+		s[++siz]=c;
+		int u=getfail(las);
+		if(!ch[u][c]){
+			int v=nwnode(len[u]+2);
+			fail[v]=ch[getfail(fail[u])][c];
+			ch[u][c]=v;
+			dif[v]=len[v]-len[fail[v]];
+			if(dif[v]==dif[fail[v]])
+				slk[v]=slk[fail[v]];
+			else slk[v]=fail[v];
+		}las=ch[u][c];
+	}
+	inline void solve(){
+		if(siz%2==0&&s[siz]==s[siz-1]&&dp[siz]>dp[siz-2])
+			dp[siz]=dp[siz-2],pre[siz]=siz-2;
+		for(int x=las;x;x=slk[x]){
+			g[x]=siz-len[slk[x]]-dif[x];
+			if(dif[fail[x]]==dif[x]&&dp[g[x]]>dp[g[fail[x]]])
+				g[x]=g[fail[x]];
+			if(siz%2==0&&dp[siz]>dp[g[x]]+1)
+				dp[siz]=dp[g[x]]+1,pre[siz]=g[x];
+		}
+	}
+}am;
+char s1[N],s2[N],s[N*2];
+int main(){
+	scanf("%s%s",s1+1,s2+1);
+	n=strlen(s1+1);
+	for(int i=1;i<=n;++i){
+		//printf("%c%c",s1[i],s2[i]);
+		s[i*2-1]=s1[i],s[i*2]=s2[i];
+	}
+	n*=2;
+	memset(dp,0x3f,sizeof(dp));
+	dp[0]=0;
+	for(int i=1;i<=n;++i){
+		am.inser(s[i]-'a');
+		am.solve();
+	}	
+	if(dp[n]>=0x3f3f3f3f)return puts("-1"),0;
+    printf("%d\n",dp[n]);
+	for(int i=n;i>=1;i=pre[i]){
+		if(i-pre[i]>2)
+			printf("%d %d\n",pre[i]/2+1,i/2);
+	}
+	return 0;
+}//	 1.33s /  133.78MB /  1.62KB C++14 O2
+```
+
+#### 3.12.5 一个串的所有前缀的双回文子串个数
+
+```c++
+/**
+ * 设A是任意一个回文串，则形如AA的串，就叫做双回文串
+ * 统计一个串的所有前缀的双回文子串个数
+*/
+struct PAM {
+	struct Node {
+		int fail, len, fa, sum;
+		int son[26];
+		int cnt = 0;
+	};
+	vector<Node> t;
+	vector<vector<int>> fa;
+	int lim;
+	int N = 0;
+
+	PAM(int n) {
+		lim = log2(n + 1);
+		t.resize(n + 2);
+		fa.resize(lim + 1, vector<int>(n + 2));
+		t[0].fail = 1;
+		t[1].len = -1;
+		N = 1;
+	}
+
+	void solve(string& s) {
+		int n = s.size() - 1;
+
+		auto getfail = [&](int x, int i) {
+			while(s[i - t[x].len - 1] != s[i]) x = t[x].fail;
+			return x;
+		};
+
+		int lst = 0;
+		int ans = 0;
+		for(int i = 1; i <= n; i++) {
+			int e = s[i] - 'a';
+			int x = getfail(lst, i);
+			if(!t[x].son[e]) {
+				t[++N].fail = t[getfail(t[x].fail, i)].son[e];
+				t[x].son[e] = N;
+				t[N].fa = x;
+
+				// 树上倍增
+				fa[0][N] = t[N].fail;
+				for(int k = 1; k <= lim; k++) fa[k][N] = fa[k - 1][fa[k - 1][N]];
+
+				t[N].len = t[x].len + 2;
+			} else {
+				t[t[x].son[e]].cnt = 0;
+			}
+			lst = t[x].son[e];
+			t[lst].cnt += t[t[lst].fail].cnt;
+
+			// 找fail树祖先中是否存在长度为当前回文串一半的节点
+			if(~t[lst].len & 1) {
+				int y = lst;
+				int tar = t[lst].len / 2;
+				for(int k = lim; k >= 0; k--) {
+					if(t[fa[k][y]].len == tar) {
+						y = fa[k][y];
+						break;
+					} else if(t[fa[k][y]].len > tar) {
+						y = fa[k][y];
+					}
+				}
+				if(tar > 0 && t[y].len == tar) {
+					t[lst].cnt += 1;
+				}
+			}
+			
+			ans += t[lst].cnt;
+			cout << ans << " ";
+		}
+		cout << endl;
+	}
+};
+```
 
 ***
 
