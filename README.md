@@ -54,6 +54,8 @@
 		- [4.1 线性基](#41-线性基)
 		- [4.2 雨天的尾巴：树链剖分+线段树合并+树上差分](#42-雨天的尾巴树链剖分线段树合并树上差分)
 		- [4.3 线段树](#43-线段树)
+		- [4.4 可持久化数组](#44-可持久化数组)
+		- [4.5 静态区间第k小](#45-静态区间第k小)
 	- [5. 图论](#5-图论)
 		- [5.1 2-SAT](#51-2-sat)
 		- [5.2 DFS序](#52-dfs序)
@@ -2188,6 +2190,185 @@ void work() {
 			cout << st.query(1, 1, n, x, y) << endl;
 		} else assert(false);
 	}
+}
+```
+
+### 4.4 可持久化数组
+
+```c++
+#define LLI long long
+struct PST {
+    struct Node {
+        int lc, rc;
+        LLI v;
+    };
+    vector<Node> t;
+    int N;
+
+    PST(int n) {
+        t.resize(n);
+        N = 0;
+    }
+
+    #define LC (t[x].lc)
+    #define RC (t[x].rc)
+
+    void build(int &x, int l, int r, const vector<LLI>& a) {
+        x = ++N;
+
+        if(l == r) {
+            t[x].v = a[l];
+            return;
+        }
+
+        int mid = l + r >> 1;
+        build(LC, l, mid, a);
+        build(RC, mid+1, r, a);
+    }
+    void modify(int &x, int y, int l, int r, int pos, LLI va) {
+        x = ++N;
+        t[x] = t[y];
+        
+        if(pos <= l && r <= pos) {
+            t[x].v = va;
+            return;
+        }
+        if(pos < l || r < pos) return;
+
+        int mid = l + r >> 1;
+        if(pos <= mid) modify(LC, t[y].lc, l, mid, pos, va);
+        else modify(RC, t[y].rc, mid+1, r, pos, va);
+    }
+    LLI query(int x, int l, int r, int pos) {
+        if(!x) return 0;
+        if(pos <= l && r <= pos) return t[x].v;
+        if(pos < l || r < pos) return 0;
+
+        int mid = l + r >> 1;
+        if(pos <= mid) return query(LC, l, mid, pos);
+        else return query(RC, mid+1, r, pos);
+    }
+};
+
+
+void work() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<LLI> a(n + 1);
+    for(int i = 1; i <= n; i++) cin >> a[i];
+
+    vector<int> rt(m + 1);
+
+    PST pst((n + m) * 20);
+
+    pst.build(rt[0], 1, n, a);
+
+    for(int i = 1; i <= m; i++) {
+        int v, opt, pos;
+        cin >> v >> opt >> pos;
+
+        if(opt == 1) {
+            int va;
+            cin >> va;
+
+            pst.modify(rt[i], rt[v], 1, n, pos, va);
+
+        } else if(opt == 2) {
+            rt[i] = rt[v];
+
+            cout << pst.query(rt[v], 1, n, pos) << endl;
+
+        } else assert(false);
+    }
+}
+
+signed main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t = 1;
+    // cin >> t;
+    while(t--) {
+        work();
+    }
+
+    return 0;
+}
+```
+
+### 4.5 静态区间第k小
+
+```c++
+/*
+ * 区间第k小
+ * 可持久化线段树，值域，持久化维护区间，支持单点修改，区间和
+ */
+struct PST {
+    struct Node {
+        int s, lc, rc;
+    };
+    vector<Node> t;
+    int N;
+
+    PST(int n) { t.resize(n); N = 0; }
+
+    #define LC (t[x].lc)
+    #define RC (t[x].rc)
+
+    void pushup(int x) {
+        t[x].s = t[LC].s + t[RC].s;
+    }
+    void modify(int &x, int y, int l, int r, int pos, int va) {
+        x = ++N;
+        t[x] = t[y];
+
+        if(pos <= l && r <= pos) { t[x].s += va; return; }
+        if(pos < l || r < pos) return;
+
+        int mid = l + r >> 1;
+        if(pos <= mid) modify(LC, t[y].lc, l, mid, pos, va);
+        else modify(RC, t[y].rc, mid+1, r, pos, va);
+        pushup(x);
+    }
+    int query(int L, int R, int l, int r, int k) {
+		if(l == r) return l;
+        int mid = l + r >> 1;
+        int tmp = t[t[R].lc].s - t[t[L].lc].s;
+        if(tmp >= k)
+            return query(t[L].lc, t[R].lc, l, mid, k);
+        else
+            return query(t[L].rc, t[R].rc, mid+1, r, k - tmp);
+    }
+};
+
+void work() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(n + 1);
+    for(int i = 1; i <= n; i++) cin >> a[i];
+
+	// 离散化是为了避免被卡空间
+	auto b = a;
+	sort(b.begin() + 1, b.end());
+	b.erase(unique(b.begin() + 1, b.end()), b.end());
+	int M = b.size() - 1;
+	map<int, int> f;
+	for(int i = 1; i <= M; i++) f[b[i]] = i;
+	for(int i = 1; i <= n; i++) a[i] = f[a[i]];
+
+    PST pst((n + m) * 20);
+    vector<int> rt(n + 1);
+
+    for(int i = 1; i <= n; i++)
+        pst.modify(rt[i], rt[i - 1], 1, M, a[i], 1);
+
+    for(int i = 1; i <= m; i++) {
+        int L, R, k;
+        cin >> L >> R >> k;
+        cout << b[pst.query(rt[L - 1], rt[R], 1, M, k)] << endl;
+    }
 }
 ```
 

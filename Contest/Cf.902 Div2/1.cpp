@@ -9,7 +9,16 @@ using namespace std;
 
 
 void work() {
-	
+	int n;
+	cin >> n;
+
+	vector<int> a(n + 1);
+	for(int i = 1; i < n; i++) cin >> a[i];
+
+	int ans = 0;
+	for(int i = 1; i < n; i++) ans += a[i];
+
+	cout << -ans << endl;
 }
 
 signed main() {
@@ -17,7 +26,7 @@ signed main() {
 	cin.tie(0);
 	
 	int t = 1;
-	// cin >> t;
+	cin >> t;
 	while(t--) {
 		work();
 	}
