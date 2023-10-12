@@ -32,6 +32,7 @@
 		- [2.6 杂题](#26-杂题)
 			- [2.6.1 平面最近点对](#261-平面最近点对)
 			- [2.6.2 最小矩形覆盖](#262-最小矩形覆盖)
+		- [2.7 三维计算几何](#27-三维计算几何)
 	- [3. 字符串](#3-字符串)
 		- [3.1 KMP](#31-kmp)
 		- [3.2 EXKMP](#32-exkmp)
@@ -56,15 +57,18 @@
 		- [4.3 线段树](#43-线段树)
 		- [4.4 可持久化数组](#44-可持久化数组)
 		- [4.5 静态区间第k小](#45-静态区间第k小)
+		- [4.6 线段树优化建图](#46-线段树优化建图)
 	- [5. 图论](#5-图论)
 		- [5.1 2-SAT](#51-2-sat)
 		- [5.2 DFS序](#52-dfs序)
 		- [5.3 欧拉序求LCA O(1)](#53-欧拉序求lca-o1)
 		- [5.4 Tarjan求LCA](#54-tarjan求lca)
 		- [5.5 虚树](#55-虚树)
+		- [5.6 支配树](#56-支配树)
 	- [6. 数论](#6-数论)
 		- [6.1 逆元](#61-逆元)
 		- [6.2 EXGCD](#62-exgcd)
+		- [6.3 实数高斯消元](#63-实数高斯消元)
 	- [9. 其他](#9-其他)
 		- [9.1 树哈希](#91-树哈希)
 
@@ -799,6 +803,15 @@ void work() {
 		cout << result[(i+mnp)%4].x << " " << result[(i+mnp)%4].y << endl;
 	}
 }
+```
+
+### 2.7 三维计算几何
+
+```c++
+// 点积
+db dot(P a, P b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+// 叉积
+P det(P a, P b) { return P{a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x}; }
 ```
 
 ***
@@ -2374,6 +2387,185 @@ void work() {
 }
 ```
 
+### 4.6 线段树优化建图
+
+```c++
+#define LLI long long
+#define DBL double
+const bool DEBUG = false;
+const int maxn = 1e5 + 10;
+
+int n;
+
+// --- Edge ---
+struct Edge {
+	int to, next, va;
+}e[maxn * 50];
+int tot, last[maxn << 2];
+// there are 4*n points including intree and outtree 
+void addedge(int fm, int to, int va) {
+	e[++tot].to = to;
+	e[tot].va = va;
+	e[tot].next = last[fm];
+	last[fm] = tot;
+	//printf(" - addedge %d -> %d with %d\n", fm, to, va);
+}
+
+// --- Segment Tree ---
+// its diffrent from normal segment tree.
+// in nature, it just use the shape and though of segment tree.
+// it is only a graph (after build the segment tree).
+// in other words, it is no need to support query method.
+//   ------ but we need the range!
+//   my thought:
+// in this algorithm, we need to connect each pair leaves.
+// why shall we combine each pair leaves to one vertex?
+// so, we let vertex 1~n be the true vertex 1~n.
+
+struct Node {
+	int l, r,
+		lc, rc;
+} t[maxn << 2];
+int cnt,
+	root[2];
+
+#define LC t
+#define RC t[x].rc
+
+// return the index of its child
+void buildIntree(int &x, int l, int r) {
+	// no need to build a new vertex
+	if(l == r) {
+		x = l;
+		t[x].l = t[x].r = l;
+		return;
+	}
+	// you ONLY set t[x].l & t[x].r AFTER set X's value !!!
+	x = ++cnt;
+	t[x].l = l;
+	t[x].r = r;
+	int mid = l + r >> 1;
+	buildIntree(t[x].lc, l, mid);
+	buildIntree(t[x].rc, mid + 1, r);
+	addedge(t[x].lc, x, 0);
+	addedge(t[x].rc, x, 0);
+}
+void buildOuttree(int &x, int l, int r) {
+	if(l == r) {
+		x = l;
+		t[x].l = l;
+		t[x].r = r;
+		return;
+	}
+	x = ++cnt;
+	t[x].l = l;
+	t[x].r = r;
+	int mid = l + r >> 1;
+	buildOuttree(t[x].lc, l, mid);
+	buildOuttree(t[x].rc, mid + 1, r);
+	addedge(x, t[x].lc, 0);
+	addedge(x, t[x].rc, 0);
+}
+
+void modify1to2(int x, int l, int r, int u, int v) { // u => [l, r]
+	//printf(" - modifying, %d, [%d, %d], %d\n", x, l, r, u);
+	if(t[x].r < l || r < t[x].l) return;
+	if(l <= t[x].l && t[x].r <= r) {
+		addedge(u, x, v); 
+		return;
+	}
+	int mid = t[x].l + t[x].r >> 1;
+	if(l <= mid) modify1to2(t[x].lc, l, r, u, v);
+	if(mid < r) modify1to2(t[x].rc, l, r, u, v);
+}
+void modify2to1(int x, int l, int r, int u, int v) {
+	if(t[x].r < l || r < t[x].l) return;
+	if(l <= t[x].l && t[x].r <= r) {
+		addedge(x, u, v);
+		return;
+	}
+	int mid = t[x].l + t[x].r >> 1;
+	if(l <= mid) modify2to1(t[x].lc, l, r, u, v);
+	if(mid < r) modify2to1(t[x].rc, l, r, u, v);
+}
+
+#include<queue>
+std::priority_queue<std::pair<LLI, int> > q;
+
+const LLI INF = 1000000000000000000ll; 
+LLI f[maxn << 2];
+bool vis[maxn << 2];
+void dijkstra(int start) {
+	
+	for(int i = 1; i <= cnt; i++) // attention ! n->cnt here !
+		f[i] = INF;
+	
+	
+	f[start] = 0;
+	q.push(std::make_pair(-0, start));
+	
+	int fm, to;
+	while(!q.empty()) {
+		fm = q.top().second;
+		q.pop();
+		if(vis[fm]) continue;
+		vis[fm] = true;
+		//printf(" - exploring %d\n", fm);
+		for(int i = last[fm]; i; i = e[i].next) {
+			to = e[i].to;
+			//printf(" - explore %d -> %d\n", fm, to);
+			//printf(" - - f[fm]=%lld, f[to]=%lld\n", f[fm], f[to]);
+			if(f[to] <= f[fm] + e[i].va) continue;
+			f[to] = f[fm] + e[i].va;
+			//printf(" - - and add it\n");
+			q.push(std::make_pair(-f[to], to));
+		}
+	}
+}
+
+
+int main() {
+	
+	int q, s;
+	
+	scanf("%d%d%d", &n, &q, &s);
+	
+	cnt = n;
+	buildIntree(root[0], 1, n);
+	buildOuttree(root[1], 1, n);
+	
+	//printf("%d, %d\n", root[0], root[1]);
+	
+	int opt, u, v, l, r, w;
+	for(int i = 1; i <= q; i++) {
+		scanf("%d", &opt);
+		if(opt == 1) {
+			scanf("%d%d%d", &u, &v, &w);
+			addedge(u, v, w);
+		} else if(opt == 2) {
+			scanf("%d%d%d%d", &u, &l, &r, &w);
+			modify1to2(root[1], l, r, u, w); 
+			// outtree modify - 1 to mul
+		} else if(opt == 3) {
+			scanf("%d%d%d%d", &u, &l, &r, &w);
+			modify2to1(root[0], l, r, u, w);
+			// intree modify - mul to 1
+		}
+	}
+	
+	dijkstra(s);
+	
+	for(int i = 1; i <= n; i++)
+		if(f[i] == INF)
+			printf("-1 ");
+		else
+			printf("%lld ", f[i]);
+	printf("\n");
+	
+	return 0;
+}
+```
+
 ## 5. 图论
 
 ### 5.1 2-SAT
@@ -2834,6 +3026,165 @@ void work() {
 }
 ```
 
+### 5.6 支配树
+
+* 对于一张有向图，我们确定一个起点 $S$
+* 对于一个点 $k$，$x$ 支配 $k$，当且仅当删去点 $x$ 后，$S$ 无法到达 $k$。
+* 对于一个点 $k$，$x$ 可能有多个，取离它最近的 $x$ 连边，得到一个树形结构，就是支配树。
+
+```c++
+const int maxn = 2e5 + 10;
+const int maxm = 3e5 + 10;
+
+vector<int> e[maxn];
+vector<int> ei[maxn];
+vector<int> dfsT[maxn];
+vector<int> dfsTi[maxn];
+vector<int> dom[maxn];
+
+int n, m;
+int fa[maxn];
+int dfn[maxn];
+int id[maxn]; // dfn[id[x]] == x
+int tot;
+
+void dfs(int x) {
+	dfn[x] = ++tot;
+	id[tot] = x;
+	
+	for(auto y: e[x]) {
+		if(dfn[y]) continue;
+		fa[y] = x;
+		dfs(y);
+		dfsT[x].push_back(y); // add a edge on dfs tree
+	}
+}
+
+int sdom[maxn];
+int mn[maxn];
+int gfa[maxn];
+int find(int x) {
+	if(x != gfa[x]) {
+		int t = gfa[x];
+		gfa[x] = find(gfa[x]);
+		if(dfn[sdom[mn[x]]] > dfn[sdom[mn[t]]])
+			mn[x] = mn[t];
+	}
+	return gfa[x];
+}
+void tarjan() {
+	for(int i = 1; i <= n; i++) {
+		gfa[i] = i;
+		sdom[i] = i;
+		mn[i] = i;
+	}
+	for(int j = n; j >= 2; j--) {
+		int x = id[j];
+		if(!x) continue;
+		
+		int pos = j;
+		for(auto y: ei[x]) {
+			if(!dfn[y]) continue;
+			if(dfn[y] < dfn[x]) {
+				pos = min(pos, dfn[y]);
+			} else {
+				find(y);
+				pos = min(pos, dfn[sdom[mn[y]]]);
+			}
+		}
+		sdom[x] = id[pos];
+		gfa[x] = fa[x];
+		dfsT[sdom[x]].push_back(x);
+	}
+}
+
+int dep[maxn];
+int dp[25][maxn];
+int getLCA(int x, int y) {
+	if(dep[x] < dep[y]) swap(x, y);
+	int del = dep[x] - dep[y];
+	for(int k = 0; k <= 20; k++)
+		if((1 << k) & del)
+			x = dp[k][x];
+	if(x == y) return x;
+	for(int k = 20; k >= 0; k--) {
+		if(dp[k][x] != dp[k][y]) {
+			x = dp[k][x];
+			y = dp[k][y];
+		}
+	}
+	return dp[0][x];
+}
+void buildDom(int x) {
+	int to = dfsTi[x][0];
+	for(auto y: dfsTi[x]) {
+		to = getLCA(to, y);
+	}
+	dep[x] = dep[to] + 1;
+	dp[0][x] = to;
+	dom[to].push_back(x);
+	
+	for(int i = 1; i <= 20; i++)
+		dp[i][x] = dp[i - 1][dp[i - 1][x]];
+}
+
+int indeg[maxn];
+void topoSort() {
+	for(int x = 1; x <= n; x++) {
+		for(auto y: dfsT[x]) {
+			indeg[y]++;
+			dfsTi[y].push_back(x);
+		}
+	}
+	for(int i = 1; i <= n; i++) {
+		if(!indeg[i]) {
+			dfsT[0].push_back(i);
+			dfsTi[i].push_back(0);
+		}
+	}
+	
+	queue<int> q;
+	q.push(0);
+	while(!q.empty()) {
+		int x = q.front(); q.pop();
+		for(auto y: dfsT[x]) {
+			if(--indeg[y] <= 0) {
+				q.push(y);
+				buildDom(y);
+			}
+		}
+	}
+}
+
+int idom[maxn];
+void dfsDom(int x) {
+	idom[x] = 1;
+	for(auto y: dom[x]) {
+		dfsDom(y);
+		idom[x] += idom[y];
+	}
+}
+
+
+void work() {
+	
+	cin >> n >> m;
+	for(int i = 1; i <= m; i++) {
+		int x, y;
+		cin >> x >> y;
+		e[x].push_back(y);
+		ei[y].push_back(x);
+	}
+	
+	dfs(1);
+	tarjan();
+	topoSort();
+	dfsDom(0);
+	
+	for(int i = 1; i <= n; i++) cout << idom[i] << " "; cout << endl;
+}
+```
+
 ## 6. 数论
 
 ### 6.1 逆元
@@ -2868,6 +3219,60 @@ function<int(int, int, int&, int&)> exgcd = [&](int n, int m, int &x, int &y) ->
 	y = z - n / m * y;
 	return g;
 };
+```
+
+### 6.3 实数高斯消元
+
+```c++
+typedef double db;
+const db EPS = 1e-9;
+
+inline int sign(db a) { return a < -EPS ? -1 : a > EPS; }
+inline int cmp(db a, db b) { return sign(a - b); }
+
+void work() {
+    int n;
+    cin >> n;
+
+	int lim = n + 1;
+    vector<vector<db>> a(n + 1, vector<db>(lim + 1));
+	for(int i = 1; i <= n; i++) {
+		for(int j = 1; j <= lim; j++)
+			cin >> a[i][j];
+	}
+
+    auto gauss = [](int n, vector<vector<db>>& f) {
+        int i, j, k; db t;
+        int lim = n + 1;
+        for(k = 1; k <= n; k++) {
+            for(i = k; i <= n; i++) //row
+                if(sign(f[i][k]) != 0)
+                    break;
+            if(i > n) return false; // 多解
+            if(i != k)
+                for(j = 1; j <= lim; j++) // col
+                    std::swap(f[i][j], f[k][j]);
+            t = f[k][k];
+            for(i = 1; i <= lim; i++) // col
+                f[k][i] /= t;
+            for(i = 1; i <= n; i++) { // row
+                if(i == k) continue;
+                t = f[i][k];
+                for(j = 1; j <= lim; j++)
+                    f[i][j] -= f[k][j] * t;
+            }
+        }
+        return true;
+    };
+
+    if(!gauss(n, a)) {
+        cout << "No Solution" << endl;
+        return;
+    }
+	
+	for(int i = 1; i <= n; i++)
+		cout << fixed << setprecision(2) << a[i][lim] << endl;
+}
 ```
 
 ## 9. 其他
