@@ -57,11 +57,12 @@ private:
         size_t median = (R - L + 1) / 2;
         std::nth_element(points.begin() + L, points.begin() + median, points.begin() + R + 1, [&](PointID& a, PointID& b) {
             if (a.first[axis] != b.first[axis]) { return a.first[axis] < b.first[axis]; }
-            for (size_t i = 1; i < N; i++) {
-                size_t idx = (axis + i) % N;
-                if (a.first[idx] != b.first[idx]) { return a.first[idx] < b.first[idx]; }
-            }
-            return false;
+            // for (size_t i = 1; i < N; i++) {
+            //     size_t idx = (axis + i) % N;
+            //     if (a.first[idx] != b.first[idx]) { return a.first[idx] < b.first[idx]; }
+            // }
+            return a.second < b.second;
+            // return false;
         });
 
         size_t mid = L + median;
