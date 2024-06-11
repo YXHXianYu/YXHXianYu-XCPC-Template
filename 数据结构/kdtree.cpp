@@ -43,6 +43,7 @@ private:
 
 private:
     void build(std::vector<PointID>& points, Node* x, size_t L, size_t R, size_t axis) {
+        // std::cout << L << ", " << R << std::endl;
         assert(L <= R);
 
         // 1. only 1 point
@@ -55,15 +56,14 @@ private:
 
         // 2. choose median of points based on the current axis
         size_t median = (R - L + 1) / 2;
+
         std::nth_element(points.begin() + L, points.begin() + median, points.begin() + R + 1, [&](PointID& a, PointID& b) {
             if (a.first[axis] != b.first[axis]) { return a.first[axis] < b.first[axis]; }
-            // for (size_t i = 1; i < N; i++) {
-            //     size_t idx = (axis + i) % N;
-            //     if (a.first[idx] != b.first[idx]) { return a.first[idx] < b.first[idx]; }
-            // }
             return a.second < b.second;
-            // return false;
         });
+
+        // std::stable_sort(points.begin() + L, points.begin() + R + 1,
+        //                  [&](const PointID& a, const PointID& b) { return a.first[axis] < b.first[axis]; });
 
         size_t mid = L + median;
         x->id      = points[mid].second;
