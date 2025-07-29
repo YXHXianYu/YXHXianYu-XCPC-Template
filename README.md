@@ -1,6 +1,6 @@
 # YXHXianYu-XCPC-Template
 
-* (我原创的XCPC题](https://github.com/YXHXianYu/YXHXianYu-XCPC-Problems)
+* [我原创的XCPC题](https://github.com/YXHXianYu/YXHXianYu-XCPC-Problems)
 
 ## 0. 目录
 - [YXHXianYu-XCPC-Template](#yxhxianyu-xcpc-template)
