@@ -3643,3 +3643,41 @@ int main() {
     return 0;
 }
 ```
+
+### 10.2 封装的树状数组
+
+```c++
+/**
+ * By YXHXianYu, 2025.7.30
+ */
+template <typename T>
+class BIT {
+
+public:
+#define LOWBIT(x) ((x) & (-x))
+    BIT(size_t n) : m_size(n) {
+        assert(n > 0);
+        m_value = std::vector<T>(m_size + 1);
+    }
+
+    void add(size_t x, T v) {
+        assert(x > 0);
+        for (size_t i = x; i <= m_size; i += LOWBIT(i)) {
+            m_value[i] += v;
+        }
+    }
+    T query(size_t x) {
+        T ans = 0;
+        for (size_t i = x; i > 0; i -= LOWBIT(i)) {
+            ans += m_value[i];
+        }
+        return ans;
+    }
+#undef LOWBIT
+
+private:
+    size_t         m_size;
+    std::vector<T> m_value;
+};
+```
+
